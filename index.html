@@ -1,26 +1,44 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>算24</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="container">
-        <h1>算24</h1>
-        <div class="numbers">
-            <div class="number" id="num1">?</div>
-            <div class="number" id="num2">?</div>
-            <div class="number" id="num3">?</div>
-            <div class="number" id="num4">?</div>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>咪猪头算24 (Mi Zhutou 24)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="./assets/index-DfNWp6_4.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DCZB0uQa.css">
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <div class="mascot-container">
+          <div class="mascot">🐷</div>
+          <div class="bubble" id="mascot-message">你好！我是咪猪头！我们来算24吧！</div>
         </div>
-        <button id="generateBtn" class="generate-btn">生成新数字</button>
-        <div class="solutions">
-            <h2>解：</h2>
-            <div id="solutionsList" class="solutions-list"></div>
+      </header>
+      
+      <main>
+        <div class="table-surface">
+          <div class="cards-container" id="cards-container">
+            <!-- Cards will be injected here -->
+            <div class="card skeleton">?</div>
+            <div class="card skeleton">?</div>
+            <div class="card skeleton">?</div>
+            <div class="card skeleton">?</div>
+          </div>
         </div>
+
+        <div class="controls">
+          <button id="refresh-btn" class="btn primary-btn">换一组 (New)</button>
+          <button id="solve-btn" class="btn secondary-btn">看答案 (Hint)</button>
+        </div>
+
+        <div id="solutions-panel" class="solutions-panel hidden">
+          <h3>这一组有 <span id="solution-count">0</span> 种解法：</h3>
+          <ul id="solutions-list"></ul>
+          <div class="anti-rote-tip">💡 记住：不用死记硬背，动脑筋最棒！</div>
+        </div>
+      </main>
     </div>
-    <script src="script.js"></script>
-</body>
+  </body>
 </html>
