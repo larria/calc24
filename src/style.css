@@ -164,6 +164,15 @@ header {
   border: 2px solid #3ebdaf;
 }
 
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: var(--shadow-soft) !important;
+  pointer-events: none;
+}
+
 /* Solutions Panel */
 .solutions-panel {
   width: 100%;
