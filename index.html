@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>咪猪头算24 (Mi Zhutou 24)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/calc24/assets/index-DOuwCq8v.js"></script>
+    <link rel="stylesheet" crossorigin href="/calc24/assets/index-Da5d2g82.css">
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <div class="mascot-container">
+          <div class="mascot">🐷</div>
+          <div class="bubble" id="mascot-message">你好！我是咪猪头！我们来算24吧！</div>
+        </div>
+      </header>
+      
+      <main>
+        <div class="table-surface">
+          <div class="cards-container" id="cards-container">
+            <!-- Cards will be injected here -->
+            <div class="card skeleton">?</div>
+            <div class="card skeleton">?</div>
+            <div class="card skeleton">?</div>
+            <div class="card skeleton">?</div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="refresh-btn" class="btn primary-btn">换一组 (New)</button>
+          <button id="solve-btn" class="btn secondary-btn">看答案 (Hint)</button>
+        </div>
+
+        <div id="solutions-panel" class="solutions-panel hidden">
+          <h3>这一组有 <span id="solution-count">0</span> 种解法：</h3>
+          <ul id="solutions-list"></ul>
+          <div class="anti-rote-tip">💡 记住：不用死记硬背，动脑筋最棒！</div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
