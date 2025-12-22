@@ -35,6 +35,24 @@ const formatNumber = (num) => {
   return num.toString();
 };
 
+const convertToSpeakingNumber = (num) => {
+  if (num === 11) return '11';
+  if (num === 12) return '12';
+  if (num === 13) return '13';
+  return num.toString();
+};
+
+const speakNumbers = (numbers) => {
+  // Clear any existing speech queue
+  stopSpeech();
+  shouldStopSpeaking = false;
+  
+  // Add each number to the speech queue
+  numbers.forEach(num => {
+    addToSpeechQueue(convertToSpeakingNumber(num));
+  });
+};
+
 const MESSAGES = [
   "动动脑筋，在这个小脑袋里算一算！",
   "不要偷看答案，除非你真的试过了！",
@@ -115,6 +133,11 @@ function initGame() {
   renderCards(numbers);
   resetSolutions();
   updateMascot("新的题目来了！加油！");
+  
+  // Speak the numbers after a short delay to let the mascot message finish
+  setTimeout(() => {
+    speakNumbers(numbers);
+  }, 1000);
 }
 
 function renderCards(numbers) {
