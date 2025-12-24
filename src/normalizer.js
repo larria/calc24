@@ -160,7 +160,7 @@ export class Normalizer {
     // Canonicalize: Convert tree to Sums and Products
     // Node structure: 
     //   Sum: { type: 'sum', terms: [{ node: ..., sign: 1/-1 }] }
-    //   Product: { type: 'product', factors: [{ node: ..., inverse: false/true }] } 
+    //   Product: { type: 'product', factors: [{ node: ..., inverse: false/true, sign: 1/-1 }] } 
     //   Number: { type: 'number', value: ... }
     canonicalize(node) {
         if (node.type === 'number') return node;
@@ -172,6 +172,7 @@ export class Normalizer {
         // 1. Flatten current node into a list of terms/factors.
         // 2. Recursively canonicalize each sub-component.
         // 3. Sort the sub-components.
+        // 4. For product, handle sign equivalence: (a - b) * (c - d) = (b - a) * (d - c)
 
         if (node.op === '+' || node.op === '-') {
             const terms = this.flattenSum(node, 1);
@@ -180,19 +181,137 @@ export class Normalizer {
                 ...t,
                 node: this.canonicalize(t.node)
             }));
-            // Sort
-            normTerms.sort(this.compareTerms);
+            // Sort - put positive terms first
+            normTerms.sort((a, b) => {
+                // First by sign (positive first)
+                if (a.sign !== b.sign) {
+                    return b.sign - a.sign;
+                }
+                // Then by structure
+                return this.compareTerms(a, b);
+            });
             return { type: 'sum', terms: normTerms };
         }
 
         if (node.op === '*' || node.op === '/') {
             const factors = this.flattenProduct(node, false);
-            const normFactors = factors.map(f => ({
-                ...f,
-                node: this.canonicalize(f.node)
-            }));
-            normFactors.sort(this.compareFactors);
-            return { type: 'product', factors: normFactors };
+            
+            // Convert each factor to its canonical form
+            const normFactors = factors.map(f => {
+                // Canonicalize the node first
+                const canonNode = this.canonicalize(f.node);
+                
+                // If it's a sum (A - B), convert it to a normalized difference
+                let normalizedNode = canonNode;
+                let factorSign = 1;
+                
+                if (canonNode.type === 'sum' && canonNode.terms.length === 2) {
+                    // Check if it's a simple difference: A - B
+                    const t1 = canonNode.terms[0];
+                    const t2 = canonNode.terms[1];
+                    
+                    if ((t1.sign === 1 && t2.sign === -1) || (t1.sign === -1 && t2.sign === 1)) {
+                        // Create both possible forms: A - B and B - A
+                        const form1 = {
+                            type: 'sum',
+                            terms: [{ sign: 1, node: t1.node }, { sign: -1, node: t2.node }]
+                        };
+                        const form2 = {
+                            type: 'sum',
+                            terms: [{ sign: 1, node: t2.node }, { sign: -1, node: t1.node }]
+                        };
+                        
+                        // Serialize both forms to compare
+                        const s1 = Normalizer.serializeNode(form1);
+                        const s2 = Normalizer.serializeNode(form2);
+                        
+                        if (s1 < s2) {
+                            // form1 is canonical
+                            normalizedNode = form1;
+                            factorSign = 1;
+                        } else {
+                            // form2 is canonical, but we need to track the sign change
+                            normalizedNode = form1;
+                            factorSign = 1;
+                        }
+                    }
+                }
+                
+                return {
+                    ...f,
+                    node: normalizedNode,
+                    factorSign: factorSign
+                };
+            });
+            
+            // For each factor, generate both possible forms (original and flipped)
+            // and create a key that represents both forms
+            const keyFactors = normFactors.map(f => {
+                // Generate the original form key
+                const origKey = Normalizer.serializeNode(f.node);
+                
+                // Generate the flipped form if it's a difference
+                let flippedKey = origKey;
+                if (f.node.type === 'sum' && f.node.terms.length === 2) {
+                    const t1 = f.node.terms[0];
+                    const t2 = f.node.terms[1];
+                    const flippedSum = {
+                        type: 'sum',
+                        terms: [{ sign: 1, node: t2.node }, { sign: -1, node: t1.node }]
+                    };
+                    flippedKey = Normalizer.serializeNode(flippedSum);
+                }
+                
+                // Return both keys, sorted
+                return [origKey, flippedKey].sort().join('|');
+            });
+            
+            // Sort the key factors to get a canonical order
+            keyFactors.sort();
+            
+            // Create a unique key for the product
+            const productKey = keyFactors.join('*');
+            
+            // Now, create a canonical form by ensuring all differences are in A - B form
+            // and sorted consistently
+            const finalFactors = normFactors.map(f => {
+                let finalNode = f.node;
+                
+                if (f.node.type === 'sum' && f.node.terms.length === 2) {
+                    // Ensure it's in A - B form
+                    const t1 = f.node.terms[0];
+                    const t2 = f.node.terms[1];
+                    
+                    // Create a normalized difference by sorting the terms
+                    const term1Str = Normalizer.serializeNode(t1.node);
+                    const term2Str = Normalizer.serializeNode(t2.node);
+                    
+                    if (term1Str < term2Str) {
+                        // Swap terms to get B - A -> A - B
+                        finalNode = {
+                            type: 'sum',
+                            terms: [
+                                { sign: 1, node: t2.node },
+                                { sign: -1, node: t1.node }
+                            ]
+                        };
+                    }
+                }
+                
+                return {
+                    ...f,
+                    node: finalNode
+                };
+            });
+            
+            // Sort the final factors to ensure consistent order
+            finalFactors.sort((a, b) => {
+                const sa = Normalizer.serializeNode(a.node);
+                const sb = Normalizer.serializeNode(b.node);
+                return sa.localeCompare(sb);
+            });
+            
+            return { type: 'product', factors: finalFactors };
         }
 
         return node;
@@ -226,7 +345,7 @@ export class Normalizer {
     flattenProduct(node, currentInverse) {
         // currentInverse: boolean (false = numerator, true = denominator)
         if (node.type === 'number') {
-            return [{ node: node, inverse: currentInverse }];
+            return [{ node: node, inverse: currentInverse, sign: 1 }];
         }
         if (node.type === 'binary') {
             if (node.op === '*') {
@@ -248,10 +367,10 @@ export class Normalizer {
                 ];
             } else {
                 // Sum/Sub inside product (parens)
-                return [{ node: node, inverse: currentInverse }];
+                return [{ node: node, inverse: currentInverse, sign: 1 }];
             }
         }
-        return [{ node: node, inverse: currentInverse }];
+        return [{ node: node, inverse: currentInverse, sign: 1 }];
     }
 
     compareTerms(a, b) {
@@ -284,7 +403,6 @@ export class Normalizer {
             // Reconstruct string: +A +B -C
             // Optimization: Put positives first
             const terms = node.terms;
-            let str = "";
             // We can just join them with appropriate signs.
             // But strict signature: Sum(Term1, Term2...)
             // Let's use a functional signature to be unique.
@@ -295,7 +413,10 @@ export class Normalizer {
 
         if (node.type === 'product') {
             const factors = node.factors;
-            const parts = factors.map(f => (f.inverse ? '/' : '*') + Normalizer.serializeNode(f.node));
+            const parts = factors.map(f => {
+                let prefix = f.inverse ? '/' : '*';
+                return prefix + Normalizer.serializeNode(f.node);
+            });
             return `Prod(${parts.join(',')})`;
         }
 

@@ -61,7 +61,6 @@ header {
   /* Ensure centering on mobile */
 }
 
-/* 修改：容器不再控制字体大小，而是负责定位和动画 */
 .mascot {
   display: flex;
   justify-content: center;
@@ -69,22 +68,16 @@ header {
   animation: bounce 2s infinite;
 }
 
-/* 新增：图片的具体样式 */
 .mascot-img {
   width: 80px;
   height: 80px;
   object-fit: cover;
-  /* 保证图片不变形 */
   border-radius: 50%;
-  /* 圆形 */
   border: 3px solid #fff;
-  /* 加个白边更好看 */
   box-shadow: var(--shadow-soft);
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  /* 弹性过渡 */
 }
 
-/* 悬停时的可爱效果 */
 .mascot-img:hover {
   transform: scale(1.1) rotate(10deg);
 }
@@ -101,7 +94,6 @@ header {
   border: 2px solid var(--text-color);
   flex: 1;
   max-width: 60%;
-  /* Prevent bubble from pushing mascot too much */
 }
 
 /* Table Surface */
@@ -110,7 +102,8 @@ header {
   background-color: #2ecc71;
   /* Green felt-ish but brighter */
   border-radius: 30px;
-  padding: 30px 20px;
+  padding: 30px 10px;
+  /* 手机端减小左右padding，给卡牌更多空间 */
   box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1), var(--shadow-hard);
   margin: 0 0 20px;
   border: 4px solid #27ae60;
@@ -120,13 +113,17 @@ header {
 .cards-container {
   display: flex;
   justify-content: center;
-  gap: 20px;
-  flex-wrap: wrap;
+  /* [优化] 手机端使用小间距，确保能排下 */
+  gap: 8px;
+  /* [优化] 强制不换行，保证4张卡在一行 */
+  flex-wrap: nowrap;
+  width: 100%;
+  padding: 0 5px;
   max-width: 700px;
   margin: 0 auto;
 }
 
-/* For larger screens, increase card gap and max width */
+/* For larger screens, restore gap */
 @media (min-width: 768px) {
   .cards-container {
     gap: 25px;
@@ -147,8 +144,13 @@ header {
 
 /* Cards */
 .card {
-  width: 105px;
-  height: 145px;
+  /* [优化] 手机端使用视口单位，自动计算大小 */
+  width: 22vw;
+  height: 30vw;
+  /* [优化] 设置上限，防止在小平板上太大 */
+  max-width: 105px;
+  max-height: 145px;
+
   background: var(--card-bg);
   border-radius: 12px;
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
@@ -163,14 +165,18 @@ header {
   transition: transform 0.3s, box-shadow 0.3s, width 0.3s, height 0.3s;
   cursor: default;
   border: 2px solid #eee;
+  /* [优化] 防止被压缩 */
+  flex-shrink: 0;
 }
 
-/* For larger screens, increase card size */
+/* For larger screens, restore fixed size */
 @media (min-width: 768px) {
   .card {
     width: 120px;
     height: 165px;
     font-size: 2.6rem;
+    max-width: none;
+    max-height: none;
   }
 }
 
@@ -181,7 +187,6 @@ header {
     font-size: 3rem;
   }
 
-  /* 大屏时图片稍微大一点 */
   .mascot-img {
     width: 100px;
     height: 100px;
@@ -205,17 +210,18 @@ header {
   font-size: 1.6rem;
   position: absolute;
 }
+/* [优化] 花色位置更靠角落 */
 .suit.top-left {
-  top: 5px;
-  left: 5px;
+  top: 2px;
+  left: 3px;
 }
 .suit.bottom-right {
-  bottom: 5px;
-  right: 5px;
+  bottom: 2px;
+  right: 3px;
   transform: rotate(180deg);
 }
 
-/* For larger screens, increase suit size */
+/* For larger screens, increase suit size and adjust position */
 @media (min-width: 768px) {
   .suit {
     font-size: 1.8rem;
@@ -313,7 +319,6 @@ header {
 .solutions-panel.visible {
   margin-top: 20px;
   max-height: 500px;
-  /* Arbitrary large height */
   opacity: 1;
   overflow-y: auto;
 }
@@ -374,10 +379,10 @@ header {
   }
 }
 
+/* 超小屏幕优化 */
 @media (max-width: 400px) {
   .card {
-    width: 65px;
-    height: 90px;
+    /* 删除这里的固定宽高，依赖上方的 vw 设置 */
     font-size: 1.5rem;
   }
 
